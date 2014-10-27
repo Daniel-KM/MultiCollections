@@ -151,7 +151,7 @@ class MultiCollectionsPlugin extends Omeka_Plugin_AbstractPlugin
         $label = get_option('multicollections_override') ? __('Collections') : __('Multi-Collections');
 
         $html = '<style type="text/css">';
-        $html .= 'div#collection-form {display: none;}';
+        $html .= get_option('multicollections_override') ? 'div#collection-form {display: none;}' : '';
         $html .= 'div#multicollections-form div.inputs label {display:block; line-height: 1em; font-weight: normal;}';
         $html .= 'div#multicollections-form div.inputs label input { margin-right: 6px;}';
         $html .= '</style>';
