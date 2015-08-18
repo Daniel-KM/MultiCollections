@@ -197,24 +197,42 @@ class MultiCollectionsPlugin extends Omeka_Plugin_AbstractPlugin
 
     public function hookAfterSaveItem($args)
     {
-        // Only when saving form.
-        if (!$args['post']) {
-            return;
-        }
-
         $item = $args['record'];
-        $post = $args['post'];
+
+        // flag whether or not to delete all old collections for this item record
+        $purge_collections = TRUE;
+
+        // if $args['post'] is not set, this is a batch item update
+        if (!$args['post']) {
+            $collection_ids = array();
+
+            // if they are updating the collection ID:
+            // 1.) Don't delete old collections
+            // 2.) Set the $collection_ids as the collection the user selected
+            if (!empty($item->collection_id)) {
+                $purge_collections = FALSE;
+                $collection_ids[] = $item->collection_id;
+            }
+        }
+        // else this is a single item record edit
+        // set $collection_ids from the POST variable
+        else {
+            $collection_ids = $args['post']['multicollections_collections'];
+        }
 
         $relationTable = get_db()->getTable('RecordRelationsRelation');
         $props = self::defaultParams();
         $props['subject_id'] = $item->id;
-        $currCollections = $relationTable->findBy($props);
 
-        foreach ($currCollections as $collection) {
-            $collection->delete();
+        // delete all items old collections if the flag is set
+        if ($purge_collections) {
+            $currCollections = $relationTable->findBy($props);
+            foreach ($currCollections as $collection) {
+                $collection->delete();
+            }
         }
 
-        foreach ($post['multicollections_collections'] as $collection_id) {
+        foreach ($collection_ids as $collection_id) {
             $props['object_id'] = $collection_id;
             if ($relationTable->count($props) == 0) {
                 $relation = new RecordRelationsRelation();
